@@ -1,0 +1,168 @@
+.chat-row {
+    display: flex;
+    margin: 5px;
+    width: 100%;
+}
+
+.row-reverse {
+    flex-direction: row-reverse;
+}
+
+.chat-bubble {
+    font-family: "Source Sans Pro", sans-serif, "Segoe UI", "Roboto", sans-serif;
+    border: 1px solid transparent;
+    padding: 10px 15px;
+    margin: 0px 7px;
+    max-width: 70%;
+    border-radius: 10px;
+    word-wrap: break-word;   
+
+}
+
+.ai-bubble {
+    background: rgb(240, 242, 246);
+    border-radius: 10px;
+}
+
+.human-bubble {
+    background: linear-gradient(135deg, rgb(0, 178, 255) 0%, rgb(0, 106, 255) 100%); 
+    color: white;
+    border-radius: 20px;
+}
+
+.chat-icon {
+    border-radius: 5px;
+    align-self: flex-start;
+    margin-top: 5px;
+}
+
+.button-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 10px 0;
+}
+
+
+.calendar-container {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.file-uploader-container {
+    margin: 15px 0;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 10px;
+}
+
+.text-area-container {
+    margin: 15px 0;
+}
+
+.message-container {
+    margin-bottom: 15px;
+}
+
+.stButton > button {
+    border-radius: 20px;
+    border: 1px solid rgb(0, 106, 255);
+    background-color: white;
+    color: rgb(0, 106, 255);
+    transition: all 0.3s;
+}
+
+.stButton > button:hover {
+    background-color: rgb(0, 106, 255);
+    color: white;
+}
+
+.elegant-table {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.elegant-table th {
+    background-color: #f1f3f5;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    color: #495057;
+    padding: 12px 15px;
+}
+
+.elegant-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eaecef;
+}
+
+.elegant-table tr:last-child td {
+    border-bottom: none;
+}
+
+.elegant-table tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* Update these styles in your static/styles.css file */
+.elegant-table {
+    margin-top: 10px;
+    margin-bottom: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border-spacing: 0; /* Remove cell spacing */
+    width: 100%;
+    border-collapse: collapse; /* Collapse borders */
+}
+
+.elegant-table th {
+    background-color: #f1f3f5;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    color: #495057;
+    padding: 8px 12px; /* Reduced padding */
+    text-align: left;
+    border: none; /* Remove borders */
+}
+
+.elegant-table td {
+    padding: 6px 12px; /* Reduced padding */
+    border-bottom: 1px solid #f0f0f0; /* Lighter border */
+    font-size: 0.9rem;
+}
+
+.elegant-table tr:last-child td {
+    border-bottom: none;
+}
+
+.elegant-table tr:hover {
+    background-color: #f1f3f5;
+}
+
+/* Status Badge Styles - more compact */
+.status-badge {
+    padding: 3px 8px; /* Reduced padding */
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Record Card Container */
+.records-container {
+    padding: 0; /* Remove padding */
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
