@@ -277,13 +277,22 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
     if multiselect_key not in st.session_state:
         st.session_state[multiselect_key] = {}
     
+    # Track if form has been submitted and should be disabled
+    form_disabled_key = f"form_disabled_{message_index}"
+    if form_disabled_key not in st.session_state:
+        st.session_state[form_disabled_key] = False
+        
+    # If form is disabled, show a status indicator
+    if st.session_state[form_disabled_key]:
+        st.success("Form has been submitted successfully! No further edits allowed.")
+    
     # Build the form UI
     with st.container():
         # Use a table-like layout for the form
         for field_name in form_data.keys():
             field_value = st.session_state[form_state_key].get(field_name, form_data.get(field_name))
             is_mandatory = mandatory_fields.get(field_name, False)
-            is_editable = editable_fields.get(field_name, False)
+            is_editable = editable_fields.get(field_name, False) and not st.session_state[form_disabled_key]
             field_filters = filter_data.get(field_name)
             filter_type = filter_config.get(field_name)
             
@@ -304,7 +313,7 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
                 edit_key = f"{field_name}_edit_{message_index}"
                 
                 # Check if field is in edit mode
-                is_in_edit_mode = st.session_state[edit_mode_key].get(field_name, False)
+                is_in_edit_mode = st.session_state[edit_mode_key].get(field_name, False) and not st.session_state[form_disabled_key]
                 
                 if is_in_edit_mode and is_editable:
                     # Different input types based on field and filter configuration
@@ -467,36 +476,42 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
             
             st.divider()
     
-    # Submit button for the whole form
-    if st.button("Submit Changes", key=f"submit_form_{message_index}"):
-        # Validate form before submission
-        form_is_valid = True
-        validation_messages = []
-        
-        # Check mandatory fields
-        for field, is_required in mandatory_fields.items():
-            if is_required:
-                field_value = st.session_state[form_state_key].get(field)
-                if field_value is None or (isinstance(field_value, str) and field_value.strip() == ""):
-                    form_is_valid = False
-                    validation_messages.append(f"{field.replace('_', ' ').title()} is required")
-        
-        if form_is_valid:
-            # Submit the form data
-            st.success("Form submitted successfully!")
-            # Add a user message showing submission
-            st.session_state.history.append(Message(
-                "human", 
-                f"Form submitted with updated data."
-            ))
+    # Submit button for the whole form - only show if form is not disabled
+    if not st.session_state[form_disabled_key]:
+        if st.button("Submit Changes", key=f"submit_form_{message_index}"):
+            # Validate form before submission
+            form_is_valid = True
+            validation_messages = []
             
-            # Process response
-            response = process_state(human_prompt="form_submitted", data={"form_data": st.session_state[form_state_key]})
-            handle_bot_response(response)
-        else:
-            # Show validation errors
-            for msg in validation_messages:
-                st.error(msg)
+            # Check mandatory fields
+            for field, is_required in mandatory_fields.items():
+                if is_required:
+                    field_value = st.session_state[form_state_key].get(field)
+                    if field_value is None or (isinstance(field_value, str) and field_value.strip() == ""):
+                        form_is_valid = False
+                        validation_messages.append(f"{field.replace('_', ' ').title()} is required")
+            
+            if form_is_valid:
+                # Mark form as disabled to prevent further edits
+                st.session_state[form_disabled_key] = True
+                
+                # Clear any active edit modes
+                st.session_state[edit_mode_key] = {}
+                
+                # Add a user message showing submission
+                st.session_state.history.append(Message(
+                    "human", 
+                    f"Form submitted with updated data."
+                ))
+                
+                # Process response
+                response = process_state(human_prompt="form_submitted", data={"form_data": st.session_state[form_state_key]})
+                handle_bot_response(response)
+                st.rerun()
+            else:
+                # Show validation errors
+                for msg in validation_messages:
+                    st.error(msg)
     
     return st.session_state[form_state_key]
 
@@ -663,6 +678,15 @@ def handle_bot_response(response):
                 bot_message.filter_config = filter_config
             else:
                 bot_message.enable_form = False
+
+            # If this is a response after form submission, make sure we disable the old form
+            if response.get('state') == 'FORM_SUBMITTED':
+                # Find the most recent form in history and mark it as disabled
+                for i in range(len(st.session_state.history) - 1, -1, -1):
+                    if hasattr(st.session_state.history[i], 'enable_form') and st.session_state.history[i].enable_form:
+                        form_disabled_key = f"form_disabled_{i}"
+                        st.session_state[form_disabled_key] = True
+                        break
 
             st.session_state.history.append(bot_message)
 
