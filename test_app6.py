@@ -272,6 +272,11 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
     if edit_mode_key not in st.session_state:
         st.session_state[edit_mode_key] = {}
     
+    # Track multiselect values separately to avoid reloading issues
+    multiselect_key = f"multiselect_values_{message_index}"
+    if multiselect_key not in st.session_state:
+        st.session_state[multiselect_key] = {}
+    
     # Build the form UI
     with st.container():
         # Use a table-like layout for the form
@@ -352,21 +357,35 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
                             # Update form state immediately
                             st.session_state[form_state_key][field_name] = selected
                         elif filter_type == 'multi':
-                            # Multi-select
-                            default_values = []
-                            if isinstance(field_value, list) and field_value:
-                                # Filter to only include values that exist in field_filters
-                                default_values = [v for v in field_value if v in field_filters]
+                            # Initialize multiselect value in session state if not present
+                            multiselect_field_key = f"{field_name}_multiselect_{message_index}"
+                            if multiselect_field_key not in st.session_state[multiselect_key]:
+                                # Initialize with current values
+                                if isinstance(field_value, list):
+                                    st.session_state[multiselect_key][multiselect_field_key] = [
+                                        v for v in field_value if v in field_filters
+                                    ]
+                                else:
+                                    st.session_state[multiselect_key][multiselect_field_key] = []
                             
-                            selected = st.multiselect(
+                            # Create a callback to update session state when selection changes
+                            def on_multiselect_change():
+                                selected_values = st.session_state[multiselect_field_key]
+                                st.session_state[multiselect_key][multiselect_field_key] = selected_values
+                                st.session_state[form_state_key][field_name] = selected_values
+                            
+                            # Multi-select with persistent values
+                            st.multiselect(
                                 "Select values",
                                 options=field_filters,
-                                default=default_values,
-                                key=field_key,
+                                default=st.session_state[multiselect_key][multiselect_field_key],
+                                key=multiselect_field_key,
+                                on_change=on_multiselect_change,
                                 label_visibility="collapsed"
                             )
-                            # Update form state immediately
-                            st.session_state[form_state_key][field_name] = selected
+                            
+                            # Update form state with current multiselect values
+                            st.session_state[form_state_key][field_name] = st.session_state[multiselect_key][multiselect_field_key]
                     else:
                         # Text input for other fields
                         default_text = ""
@@ -379,13 +398,7 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
                                 "Enter value",
                                 value=default_text,
                                 key=field_key,
-                                label_visibility="collapsed",
-                                on_change=lambda: st.session_state.update({
-                                    form_state_key: {
-                                        **st.session_state[form_state_key],
-                                        field_name: st.session_state[field_key]
-                                    }
-                                })
+                                label_visibility="collapsed"
                             )
                         else:
                             input_value = st.text_input(
@@ -410,6 +423,17 @@ def display_form(form_data, mandatory_fields, editable_fields, filter_data, filt
                             # Revert to original value
                             if field_name in form_data:
                                 st.session_state[form_state_key][field_name] = form_data[field_name]
+                                
+                                # Also revert multiselect values if applicable
+                                if filter_type == 'multi':
+                                    multiselect_field_key = f"{field_name}_multiselect_{message_index}"
+                                    if isinstance(form_data[field_name], list):
+                                        st.session_state[multiselect_key][multiselect_field_key] = [
+                                            v for v in form_data[field_name] if v in field_filters
+                                        ]
+                                    else:
+                                        st.session_state[multiselect_key][multiselect_field_key] = []
+                            
                             # Exit edit mode
                             st.session_state[edit_mode_key][field_name] = False
                             st.rerun()
