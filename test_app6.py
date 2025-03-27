@@ -620,21 +620,34 @@ def on_file_upload(message_index):
     files_key = f"files_{message_index}"
     submitted_key = f"files_submitted_{message_index}"
     st.session_state.last_interaction_index = message_index
-    
-    if st.session_state.get(files_key):
-        # Store uploaded files in separate session state
-        st.session_state[submitted_key] = st.session_state[files_key]
+
+    # FILE UPLOAD IS OPTIONAL
+    # Modify this part to handle both cases - with or without files
+    uploaded_files = st.session_state.get(files_key, [])    
+    # Process files and update chat - even if no files were uploaded
+    file_names = [file.name for file in uploaded_files] if uploaded_files else []
+    st.session_state[submitted_key] = uploaded_files
+    st.session_state.history.append(Message("human", f"Files uploaded: {', '.join(file_names) if file_names else 'No files'}"))
+    response = process_state(files=file_names)
+    handle_bot_response(response)
+    # Set a flag to indicate files have been processed
+    st.session_state[f"files_processed_{message_index}"] = True
+
+    # FILE UPLOAD IS MANDATORY    
+    # if st.session_state.get(files_key):
+    #     # Store uploaded files in separate session state
+    #     st.session_state[submitted_key] = st.session_state[files_key]
         
-        # Process files and update chat
-        file_names = [file.name for file in st.session_state[submitted_key]]
-        st.session_state.history.append(Message("human", f"Uploaded files: {', '.join(file_names)}"))
-        response = process_state(files=file_names)
-        handle_bot_response(response)
+    #     # Process files and update chat
+    #     file_names = [file.name for file in st.session_state[submitted_key]]
+    #     st.session_state.history.append(Message("human", f"Uploaded files: {', '.join(file_names)}"))
+    #     response = process_state(files=file_names)
+    #     handle_bot_response(response)
         
-        # Set a flag to indicate files have been processed
-        st.session_state[f"files_processed_{message_index}"] = True
-    else:
-        st.error("Please upload files first.")
+    #     # Set a flag to indicate files have been processed
+    #     st.session_state[f"files_processed_{message_index}"] = True
+    # else:
+    #     st.error("Please upload files first.")
 
 def handle_bot_response(response):
     if 'messages' in response:
